@@ -5,12 +5,21 @@ declare(strict_types=1);
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Event;
 use Money\Currency;
 use Money\Money;
+use ShamarKellman\FlexCart\Contracts\CartStorageInterface;
+use ShamarKellman\FlexCart\Events\CartCleared;
+use ShamarKellman\FlexCart\Exceptions\CurrencyMismatchException;
 use ShamarKellman\FlexCart\Exceptions\InvalidQuantityException;
 use ShamarKellman\FlexCart\Exceptions\ProductNotBuyableException;
 use ShamarKellman\FlexCart\Facades\FlexCart;
+use ShamarKellman\FlexCart\Models\Cart;
+use ShamarKellman\FlexCart\Models\CartItem;
+use ShamarKellman\FlexCart\Money\Calculator;
+use ShamarKellman\FlexCart\Money\MoneyCast;
 use ShamarKellman\FlexCart\Storage\DatabaseStorage;
+use ShamarKellman\FlexCart\Storage\SessionStorage;
 use ShamarKellman\FlexCart\Tests\Models\Product;
 
 beforeEach(function () {
@@ -129,7 +138,7 @@ it('can set shipping address', function () {
 
 it('can get cart from flexcart', function () {
     FlexCart::addItem($this->product, 1);
-    expect(FlexCart::getCart())->toBeInstanceOf(\ShamarKellman\FlexCart\Models\Cart::class);
+    expect(FlexCart::getCart())->toBeInstanceOf(Cart::class);
 });
 
 it('can set and get currency', function () {
@@ -144,8 +153,8 @@ it('can handle numeric tax rate', function () {
     session()->forget('shopping_cart');
     config()->set('flex-cart.tax_rate', 15.0);
 
-    $cart = app(\ShamarKellman\FlexCart\FlexCart::class, [
-        'storage' => app(\ShamarKellman\FlexCart\Storage\DatabaseStorage::class),
+    $cart = app(ShamarKellman\FlexCart\FlexCart::class, [
+        'storage' => app(DatabaseStorage::class),
         'sessionKey' => session()->getId(),
     ]);
 
@@ -157,39 +166,39 @@ it('can handle numeric tax rate', function () {
 });
 
 it('can handle missing items in storage', function () {
-    $storage = Mockery::mock(\ShamarKellman\FlexCart\Contracts\CartStorageInterface::class);
+    $storage = Mockery::mock(CartStorageInterface::class);
     $storage->shouldReceive('get')->andReturn(['cart' => []]); // no items key
 
-    $cart = new \ShamarKellman\FlexCart\FlexCart($storage);
+    $cart = new ShamarKellman\FlexCart\FlexCart($storage);
     expect($cart->items())->toHaveCount(0);
 });
 
 it('can handle shipping cost as money object in storage', function () {
     $cost = new Money(1000, new Currency('USD'));
-    $storage = Mockery::mock(\ShamarKellman\FlexCart\Contracts\CartStorageInterface::class);
+    $storage = Mockery::mock(CartStorageInterface::class);
     $storage->shouldReceive('get')->andReturn([
         'cart' => ['shipping_cost' => $cost],
         'items' => [],
     ]);
 
-    $cart = new \ShamarKellman\FlexCart\FlexCart($storage, 'test');
+    $cart = new ShamarKellman\FlexCart\FlexCart($storage, 'test');
     expect($cart->shippingCost()->getAmount())->toBe('1000');
 });
 
 it('can handle shipping cost as array in storage', function () {
-    $storage = Mockery::mock(\ShamarKellman\FlexCart\Contracts\CartStorageInterface::class);
+    $storage = Mockery::mock(CartStorageInterface::class);
     $storage->shouldReceive('get')->andReturn([
         'cart' => ['shipping_cost' => ['amount' => '2000', 'currency' => 'USD']],
         'items' => [],
     ]);
 
-    $cart = new \ShamarKellman\FlexCart\FlexCart($storage, 'test');
+    $cart = new ShamarKellman\FlexCart\FlexCart($storage, 'test');
     expect($cart->shippingCost()->getAmount())->toBe('2000');
 });
 
 it('money cast get returns money object', function () {
-    $cast = new \ShamarKellman\FlexCart\Money\MoneyCast;
-    $model = new \ShamarKellman\FlexCart\Models\CartItem;
+    $cast = new MoneyCast;
+    $model = new CartItem;
     $money = $cast->get($model, 'unit_price', 1000, []);
 
     expect($money)->toBeInstanceOf(Money::class)
@@ -223,10 +232,10 @@ it('can use money calculator', function () {
     $m1 = new Money(100, new Currency('USD'));
     $m2 = new Money(200, new Currency('USD'));
 
-    expect(\ShamarKellman\FlexCart\Money\Calculator::add($m1, $m2)->getAmount())->toBe('300')
-        ->and(\ShamarKellman\FlexCart\Money\Calculator::subtract($m2, $m1)->getAmount())->toBe('100')
-        ->and(\ShamarKellman\FlexCart\Money\Calculator::multiply($m1, 2)->getAmount())->toBe('200')
-        ->and(\ShamarKellman\FlexCart\Money\Calculator::divide($m2, 2)->getAmount())->toBe('100');
+    expect(Calculator::add($m1, $m2)->getAmount())->toBe('300')
+        ->and(Calculator::subtract($m2, $m1)->getAmount())->toBe('100')
+        ->and(Calculator::multiply($m1, 2)->getAmount())->toBe('200')
+        ->and(Calculator::divide($m2, 2)->getAmount())->toBe('100');
 });
 
 it('can get item by id', function () {
@@ -272,7 +281,7 @@ it('can get items using getItems', function () {
 it('can use session storage has and forget', function () {
     config()->set('flex-cart.storage.driver', 'session');
     $sessionId = session()->getId();
-    $storage = new \ShamarKellman\FlexCart\Storage\SessionStorage;
+    $storage = new SessionStorage;
 
     expect($storage->has($sessionId))->toBeFalse();
 
@@ -285,10 +294,10 @@ it('can use session storage has and forget', function () {
 });
 
 it('money cast throws exception for invalid value', function () {
-    $cast = new \ShamarKellman\FlexCart\Money\MoneyCast;
-    $model = new \ShamarKellman\FlexCart\Models\CartItem;
+    $cast = new MoneyCast;
+    $model = new CartItem;
     $cast->set($model, 'unit_price', 'invalid', []);
-})->throws(\InvalidArgumentException::class);
+})->throws(InvalidArgumentException::class);
 
 it('can add item with options', function () {
     $item = FlexCart::addItem($this->product, 1, ['color' => 'red', 'size' => 'M']);
@@ -319,12 +328,12 @@ it('removes item when updating quantity to zero', function () {
 });
 
 it('dispatches cart cleared event', function () {
-    \Illuminate\Support\Facades\Event::fake();
+    Event::fake();
     FlexCart::addItem($this->product, 1);
 
     FlexCart::clear();
 
-    \Illuminate\Support\Facades\Event::assertDispatched(\ShamarKellman\FlexCart\Events\CartCleared::class);
+    Event::assertDispatched(CartCleared::class);
 });
 
 it('validates shipping cost currency', function () {
@@ -333,11 +342,11 @@ it('validates shipping cost currency', function () {
     $eurCost = new Money(500, new Currency('EUR'));
 
     expect(fn () => FlexCart::setShippingCost($eurCost))
-        ->toThrow(\ShamarKellman\FlexCart\Exceptions\CurrencyMismatchException::class);
+        ->toThrow(CurrencyMismatchException::class);
 });
 
 it('loads cart with existing data from storage', function () {
-    $storage = Mockery::mock(\ShamarKellman\FlexCart\Contracts\CartStorageInterface::class);
+    $storage = Mockery::mock(CartStorageInterface::class);
     $storage->shouldReceive('get')->andReturn([
         'cart' => ['id' => 1, 'shipping_cost' => 500],
         'items' => [
@@ -354,7 +363,7 @@ it('loads cart with existing data from storage', function () {
         ],
     ]);
 
-    $cart = new \ShamarKellman\FlexCart\FlexCart($storage);
+    $cart = new ShamarKellman\FlexCart\FlexCart($storage);
 
     expect($cart->items())->toHaveCount(1)
         ->and($cart->count())->toBe(2)
@@ -362,7 +371,7 @@ it('loads cart with existing data from storage', function () {
 });
 
 it('loads cart with shipping detail from storage', function () {
-    $storage = Mockery::mock(\ShamarKellman\FlexCart\Contracts\CartStorageInterface::class);
+    $storage = Mockery::mock(CartStorageInterface::class);
     $storage->shouldReceive('get')->andReturn([
         'cart' => [],
         'items' => [],
@@ -372,7 +381,7 @@ it('loads cart with shipping detail from storage', function () {
         ],
     ]);
 
-    $cart = new \ShamarKellman\FlexCart\FlexCart($storage);
+    $cart = new ShamarKellman\FlexCart\FlexCart($storage);
     $detail = $cart->getShippingDetail();
 
     expect($detail->first_name)->toBe('Jane')

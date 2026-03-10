@@ -1,6 +1,11 @@
 <?php
 
 declare(strict_types=1);
+use ShamarKellman\FlexCart\Models\Cart;
+use ShamarKellman\FlexCart\Models\CartItem;
+use ShamarKellman\FlexCart\Models\ShippingDetail;
+use ShamarKellman\FlexCart\Storage\DatabaseStorage;
+use ShamarKellman\FlexCart\Storage\SessionStorage;
 
 return [
     'default_currency' => env('CART_DEFAULT_CURRENCY', 'USD'),
@@ -13,14 +18,14 @@ return [
         'session_key' => 'shopping_cart',
 
         'drivers' => [
-            'session' => \ShamarKellman\FlexCart\Storage\SessionStorage::class,
-            'database' => \ShamarKellman\FlexCart\Storage\DatabaseStorage::class,
+            'session' => SessionStorage::class,
+            'database' => DatabaseStorage::class,
         ],
     ],
 
     'models' => [
-        'cart' => \ShamarKellman\FlexCart\Models\Cart::class,
-        'cart_item' => \ShamarKellman\FlexCart\Models\CartItem::class,
-        'shipping_detail' => \ShamarKellman\FlexCart\Models\ShippingDetail::class,
+        'cart' => Cart::class,
+        'cart_item' => CartItem::class,
+        'shipping_detail' => ShippingDetail::class,
     ],
 ];

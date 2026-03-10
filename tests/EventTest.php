@@ -12,13 +12,15 @@ use ShamarKellman\FlexCart\Events\QuantityUpdated;
 use ShamarKellman\FlexCart\Events\ShippingAddressSet;
 use ShamarKellman\FlexCart\Events\ShippingCostSet;
 use ShamarKellman\FlexCart\Facades\FlexCart;
+use ShamarKellman\FlexCart\Storage\DatabaseStorage;
+use ShamarKellman\FlexCart\Tests\Models\Product;
 
 beforeEach(function () {
     config()->set('flex-cart.storage.driver', 'database');
-    config()->set('flex-cart.storage.drivers.database', \ShamarKellman\FlexCart\Storage\DatabaseStorage::class);
+    config()->set('flex-cart.storage.drivers.database', DatabaseStorage::class);
     config()->set('flex-cart.tax_rate', 0.0);
 
-    $this->product = \ShamarKellman\FlexCart\Tests\Models\Product::create([
+    $this->product = Product::create([
         'name' => 'Test Product',
         'price' => 1000, // $10.00
     ]);
@@ -119,7 +121,7 @@ it('dispatches CartCleared event when clearing cart', function () {
     Event::fake();
 
     $item1 = FlexCart::addItem($this->product, 1);
-    $item2 = FlexCart::additem(\ShamarKellman\FlexCart\Tests\Models\Product::create(['name' => 'Test 2', 'price' => 2000]), 2);
+    $item2 = FlexCart::additem(Product::create(['name' => 'Test 2', 'price' => 2000]), 2);
 
     Event::fake(); // Clear previous events
 

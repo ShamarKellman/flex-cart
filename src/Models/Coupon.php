@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
+use Money\Currency;
 use Money\Money;
 use ShamarKellman\FlexCart\Contracts\CouponInterface;
 use ShamarKellman\FlexCart\Database\Factories\CouponFactory;
@@ -204,7 +205,7 @@ class Coupon extends Model implements CouponInterface
         };
     }
 
-    protected function calculateApplicableSubtotal(Collection $items, \Money\Currency $currency): Money
+    protected function calculateApplicableSubtotal(Collection $items, Currency $currency): Money
     {
         $applicableSubtotal = new Money(0, $currency);
 
