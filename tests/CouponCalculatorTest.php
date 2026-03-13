@@ -12,7 +12,7 @@ use ShamarKellman\FlexCart\Tests\Models\Product;
 function createCartItem(Product $product, int $quantity): CartItem
 {
     $unitPrice = $product->getPrice();
-    $total = $unitPrice->multiply($quantity);
+    $total = $unitPrice->multiply((string) $quantity);
 
     $item = new CartItem([
         'buyable_id' => $product->id,
