@@ -1,9 +1,9 @@
 # FlexCart - A Flexible Shopping Cart Package for Laravel 12+
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/shamarkellman/laravel-flex-cart.svg?style=flat-square)](https://packagist.org/packages/shamarkellman/laravel-flex-cart)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/shamarkellman/laravel-flex-cart/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/shamarkellman/laravel-flex-cart/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/shamarkellman/laravel-flex-cart/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/shamarkellman/laravel-flex-cart/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/shamarkellman/laravel-flex-cart.svg?style=flat-square)](https://packagist.org/packages/shamarkellman/laravel-flex-cart)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/shamarkellman/flex-cart.svg?style=flat-square)](https://packagist.org/packages/shamarkellman/flex-cart)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/shamarkellman/flex-cart/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/shamarkellman/flex-cart/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/shamarkellman/flex-cart/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/shamarkellman/flex-cart/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/shamarkellman/flex-cart.svg?style=flat-square)](https://packagist.org/packages/shamarkellman/flex-cart)
 
 FlexCart is a flexible shopping cart package for Laravel 12+ that provides comprehensive cart functionality including multiple storage backends, tax calculations, shipping management, coupon/discounts, and Money PHP integration.
 
