@@ -370,6 +370,46 @@ it('loads cart with existing data from storage', function () {
         ->and($cart->shippingCost()->getAmount())->toBe('500');
 });
 
+it('item IDs are preserved when cart is reloaded from database storage', function () {
+    FlexCart::addItem($this->product, 1);
+
+    // Simulate a new request by creating a fresh FlexCart instance backed by the same DB
+    $freshCart = new ShamarKellman\FlexCart\FlexCart(app(DatabaseStorage::class));
+
+    $items = $freshCart->items();
+    expect($items)->toHaveCount(1);
+
+    $reloadedId = $items->first()->id;
+    expect($reloadedId)->not->toBeNull();
+
+    // Operations using the reloaded ID must succeed
+    expect($freshCart->removeItem($reloadedId))->toBeTrue();
+    expect($freshCart->count())->toBe(0);
+});
+
+it('loaded items have their ID set when storage returns items with ids', function () {
+    $storage = Mockery::mock(CartStorageInterface::class);
+    $storage->shouldReceive('get')->andReturn([
+        'cart' => [],
+        'items' => [
+            [
+                'id' => 42,
+                'buyable_id' => $this->product->id,
+                'buyable_type' => Product::class,
+                'quantity' => 1,
+                'unit_price' => 1000,
+                'total_price' => 1000,
+                'tax_amount' => 0,
+                'options' => [],
+            ],
+        ],
+    ]);
+
+    $cart = new ShamarKellman\FlexCart\FlexCart($storage);
+
+    expect($cart->items()->first()->id)->toBe(42);
+});
+
 it('loads cart with shipping detail from storage', function () {
     $storage = Mockery::mock(CartStorageInterface::class);
     $storage->shouldReceive('get')->andReturn([

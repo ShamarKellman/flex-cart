@@ -191,7 +191,22 @@ class FlexCart implements CartInterface
                 $this->cart->exists = true;
             }
 
-            $this->items = collect($data['items'] ?? [])->map(fn (mixed $item) => new CartItem($item));
+            /**
+             * FlexCart::load() reconstructs CartItem objects via Eloquent fill(), which excludes
+             * 'id' from $fillable, resulting in null IDs. When using DatabaseStorage, we replace
+             * the fill()-constructed items with proper Eloquent-loaded models that have correct IDs.
+             * This is required because DatabaseStorage::put() deletes and recreates all cart items
+             * on every save(), generating new auto-increment IDs each time.
+             */
+            $this->items = collect($data['items'] ?? [])->map(function (mixed $item) {
+                $cartItem = new CartItem($item);
+                if (isset($item['id'])) {
+                    $cartItem->id = $item['id'];
+                    $cartItem->exists = true;
+                }
+
+                return $cartItem;
+            });
 
             if (isset($data['shipping'])) {
                 $this->shippingDetail = new ShippingDetail($data['shipping']);
